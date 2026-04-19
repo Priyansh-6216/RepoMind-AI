@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+target/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+*.jar
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+pgdata/
+redisdata/
+
+# Cloned repos (worker temp)
+/tmp/repomind-repos/
+
+# Logs
+*.log

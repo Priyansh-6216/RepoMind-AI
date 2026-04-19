@@ -1,0 +1,124 @@
+version: "3.9"
+
+# ──────────────────────────────────────────────────────────────
+#  RepoMind AI — Docker Compose
+#  Services: PostgreSQL (pgvector), Redis, Ollama, Backend, Worker, Frontend
+# ──────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL + pgvector ────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: repomind-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Queue + Cache) ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: repomind-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Ollama (Local LLM) ─────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: repomind-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          memory: 4G
+
+  # ── Spring Boot Backend ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: repomind-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL}
+
+  # ── Python Worker ───────────────────────────────────────────
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: repomind-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL}
+      CLONE_DIR: ${APP_CLONE_DIR}
+    volumes:
+      - worker_repos:/tmp/repomind-repos
+
+  # ── React Frontend ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: repomind-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  ollama_models:
+  worker_repos:

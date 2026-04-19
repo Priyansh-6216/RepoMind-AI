@@ -1,0 +1,72 @@
+# ══════════════════════════════════════════════
+#  RepoMind AI — Spring Boot Configuration
+# ══════════════════════════════════════════════
+
+spring:
+  application:
+    name: repomind-backend
+
+  # ── PostgreSQL ──────────────────────────────
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/repomind}
+    username: ${SPRING_DATASOURCE_USERNAME:repomind}
+    password: ${SPRING_DATASOURCE_PASSWORD:repomind_secret_2024}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ── Redis ───────────────────────────────────
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  # ── Jackson ─────────────────────────────────
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# ── Ollama (Local LLM) ─────────────────────────
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  chat-model: ${OLLAMA_CHAT_MODEL:llama3.1}
+  embed-model: ${OLLAMA_EMBED_MODEL:nomic-embed-text}
+  embedding-dim: 768
+
+# ── RAG Settings ────────────────────────────────
+rag:
+  top-k: 5
+  similarity-threshold: 0.3
+  max-context-length: 6000
+
+# ── Server ──────────────────────────────────────
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# ── Actuator ────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# ── Logging ─────────────────────────────────────
+logging:
+  level:
+    com.repomind: DEBUG
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
