@@ -30,7 +30,7 @@ public class ChatController {
     @PostMapping
     public ResponseEntity<ChatResponse> askQuestion(
             @PathVariable UUID repoId,
-            @RequestBody ChatRequest request) {
+            @jakarta.validation.Valid @RequestBody ChatRequest request) {
 
         ChatResponse response = chatService.processChat(repoId, request);
         return ResponseEntity.ok(response);

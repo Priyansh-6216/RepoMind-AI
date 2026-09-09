@@ -10,5 +10,6 @@ public class ChatRequest {
 
     private String sessionId;
 
+    @jakarta.validation.constraints.NotBlank(message = "Question cannot be blank")
     private String question;
 }
