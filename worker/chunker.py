@@ -36,7 +36,8 @@ def _chunk_python(content: str, file_path: str) -> List[CodeChunk]:
 
     try:
         tree = ast.parse(content)
-    except SyntaxError:
+    except Exception as e:
+        logger.warning("ast_parse_failed", file=file_path, error=str(e))
         # Fallback: treat entire file as one chunk
         return [CodeChunk(
             chunk_type="MODULE",
@@ -49,63 +50,67 @@ def _chunk_python(content: str, file_path: str) -> List[CodeChunk]:
         )]
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            start = node.lineno
-            end = node.end_lineno or start
-            chunk_content = "\n".join(lines[start - 1:end])
+        try:
+            if isinstance(node, ast.ClassDef):
+                start = node.lineno
+                end = node.end_lineno or start
+                chunk_content = "\n".join(lines[start - 1:end])
 
-            chunks.append(CodeChunk(
-                chunk_type="CLASS",
-                name=node.name,
-                content=chunk_content,
-                start_line=start,
-                end_line=end,
-                language="python",
-                metadata={
-                    "file_path": file_path,
-                    "decorators": [
-                        ast.dump(d) for d in node.decorator_list
-                    ] if node.decorator_list else [],
-                    "bases": [ast.dump(b) for b in node.bases] if node.bases else [],
-                },
-            ))
+                chunks.append(CodeChunk(
+                    chunk_type="CLASS",
+                    name=node.name,
+                    content=chunk_content,
+                    start_line=start,
+                    end_line=end,
+                    language="python",
+                    metadata={
+                        "file_path": file_path,
+                        "decorators": [
+                            ast.dump(d) for d in node.decorator_list
+                        ] if node.decorator_list else [],
+                        "bases": [ast.dump(b) for b in node.bases] if node.bases else [],
+                    },
+                ))
 
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            start = node.lineno
-            end = node.end_lineno or start
-            chunk_content = "\n".join(lines[start - 1:end])
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                start = node.lineno
+                end = node.end_lineno or start
+                chunk_content = "\n".join(lines[start - 1:end])
 
-            # Determine if this is a method (inside a class) or standalone function
-            is_method = any(
-                isinstance(parent, ast.ClassDef)
-                for parent in ast.walk(tree)
-                if hasattr(parent, 'body') and node in getattr(parent, 'body', [])
-            )
+                # Determine if this is a method (inside a class) or standalone function
+                is_method = any(
+                    isinstance(parent, ast.ClassDef)
+                    for parent in ast.walk(tree)
+                    if hasattr(parent, 'body') and node in getattr(parent, 'body', [])
+                )
 
-            parent_class = None
-            for potential_parent in ast.walk(tree):
-                if isinstance(potential_parent, ast.ClassDef):
-                    if node in potential_parent.body:
-                        parent_class = potential_parent.name
-                        break
+                parent_class = None
+                for potential_parent in ast.walk(tree):
+                    if isinstance(potential_parent, ast.ClassDef):
+                        if node in potential_parent.body:
+                            parent_class = potential_parent.name
+                            break
 
-            chunks.append(CodeChunk(
-                chunk_type="METHOD" if is_method else "FUNCTION",
-                name=node.name,
-                content=chunk_content,
-                start_line=start,
-                end_line=end,
-                language="python",
-                metadata={
-                    "file_path": file_path,
-                    "parent_class": parent_class,
-                    "is_async": isinstance(node, ast.AsyncFunctionDef),
-                    "args": [arg.arg for arg in node.args.args],
-                    "decorators": [
-                        ast.dump(d) for d in node.decorator_list
-                    ] if node.decorator_list else [],
-                },
-            ))
+                chunks.append(CodeChunk(
+                    chunk_type="METHOD" if is_method else "FUNCTION",
+                    name=node.name,
+                    content=chunk_content,
+                    start_line=start,
+                    end_line=end,
+                    language="python",
+                    metadata={
+                        "file_path": file_path,
+                        "parent_class": parent_class,
+                        "is_async": isinstance(node, ast.AsyncFunctionDef),
+                        "args": [arg.arg for arg in node.args.args],
+                        "decorators": [
+                            ast.dump(d) for d in node.decorator_list
+                        ] if node.decorator_list else [],
+                    },
+                ))
+        except Exception as e:
+            logger.warning("ast_node_failed", node_type=type(node).__name__, error=str(e))
+            continue
 
     # If no chunks found, treat as module-level code
     if not chunks:
