@@ -13,9 +13,13 @@ from config import config
 logger = structlog.get_logger(__name__)
 
 
+from tenacity import retry, stop_after_attempt, wait_exponential, before_sleep_log
+import logging
+
 @retry(
-    stop=stop_after_attempt(3),
+    stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=2, max=10),
+    before_sleep=before_sleep_log(structlog.get_logger(__name__), logging.WARNING)
 )
 def _generate_single_embedding(text: str) -> List[float]:
     """Generate embedding for a single text using Ollama."""
