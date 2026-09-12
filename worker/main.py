@@ -58,7 +58,7 @@ signal.signal(signal.SIGINT, signal_handler)
 #  Core Pipeline
 # ══════════════════════════════════════════════════════════════
 
-def process_job(job_id: str):
+def process_job(job_id: str, redis_client=None):
     """
     Execute the full indexing pipeline for a repository.
 
@@ -185,6 +185,17 @@ def process_job(job_id: str):
         logger.error("job_failed", job_id=job_id, error=error_msg, traceback=traceback.format_exc())
         update_job_status(job_id, "FAILED", error_message=error_msg)
         update_repo_status(repo_id, "FAILED")
+        if redis_client:
+            try:
+                redis_client.lpush("repomind:jobs:dlq", json.dumps({
+                    "job_id": job_id,
+                    "repository_id": repo_id,
+                    "error": error_msg,
+                    "failed_at": time.time()
+                }))
+                logger.info("pushed_to_dlq", job_id=job_id)
+            except Exception as dlq_err:
+                logger.error("dlq_push_failed", error=str(dlq_err))
 
     finally:
         # Clean up cloned repo
@@ -228,7 +239,7 @@ def main():
                 continue
 
             logger.info("job_received", job_id=job_id)
-            process_job(job_id)
+            process_job(job_id, redis_client)
 
         except redis.ConnectionError:
             logger.warning("redis_reconnecting")
