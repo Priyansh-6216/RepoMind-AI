@@ -93,9 +93,6 @@ CREATE INDEX idx_chunks_repo ON code_chunks(repository_id);
 CREATE INDEX idx_chunks_file ON code_chunks(file_id);
 CREATE INDEX idx_chunks_type ON code_chunks(chunk_type);
 
--- IVFFlat index for fast similarity search
-    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
-
 -- ──────────────────────────────────────────────
 -- Chat Sessions
 -- ──────────────────────────────────────────────
