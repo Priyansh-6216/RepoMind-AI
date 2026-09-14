@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Code2, MessageSquareText, FileSearch, Database, Cpu } from 'lucide-react';
 import RepoImportForm from '../components/RepoImportForm';
 import StatusBadge from '../components/StatusBadge';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { importRepo, listRepos } from '../api/client';
 
 /**
@@ -110,19 +111,21 @@ export default function HomePage() {
       </motion.section>
 
       {/* Repository List */}
-      {repos.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <div className="section-header">
-            <div>
-              <h2 className="section-title">Your Repositories</h2>
-              <p className="section-subtitle">{repos.length} repositories analyzed</p>
-            </div>
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        <div className="section-header">
+          <div>
+            <h2 className="section-title">Your Repositories</h2>
+            <p className="section-subtitle">{repos.length} repositories analyzed</p>
           </div>
+        </div>
 
+        {loading ? (
+          <SkeletonLoader count={3} />
+        ) : repos.length > 0 ? (
           <div className="repo-grid">
             {repos.map((repo) => (
               <motion.div
@@ -163,8 +166,12 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
-        </motion.section>
-      )}
+        ) : (
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
+            No repositories found. Import one above to get started!
+          </p>
+        )}
+      </motion.section>
     </div>
   );
 }

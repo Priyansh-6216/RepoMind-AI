@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, Github } from 'lucide-react';
+import { Brain, Github, Sun, Moon } from 'lucide-react';
 
 /**
  * Top navigation bar with brand and navigation links.
  */
-export default function Navbar() {
+export default function Navbar({ theme, toggleTheme }) {
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
@@ -33,6 +33,9 @@ export default function Navbar() {
             <Github size={16} />
             GitHub
           </a>
+          <button onClick={toggleTheme} className="btn btn-ghost" style={{ padding: '0.4rem', borderRadius: '50%' }}>
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
       </div>
     </nav>
