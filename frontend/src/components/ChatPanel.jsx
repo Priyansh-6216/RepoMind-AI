@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, Plus, Brain } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ChatMessage from './ChatMessage';
 
 /**
@@ -71,15 +72,19 @@ export default function ChatPanel({
               No conversations yet
             </p>
           ) : (
-            sessions.map((session) => (
-              <div
+            sessions.map((session, i) => (
+              <motion.div
                 key={session.id}
                 className={`session-item ${session.id === activeSessionId ? 'active' : ''}`}
                 onClick={() => onSelectSession(session.id)}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.2 }}
+                whileHover={{ x: 2 }}
               >
                 <MessageSquare size={14} style={{ marginRight: '8px', flexShrink: 0 }} />
                 {session.title || 'Untitled'}
-              </div>
+              </motion.div>
             ))
           )}
         </div>
@@ -99,13 +104,18 @@ export default function ChatPanel({
             </p>
             <div className="chat-suggestions">
               {suggestions.map((q, i) => (
-                <button
+                <motion.button
                   key={i}
                   className="chat-suggestion"
                   onClick={() => handleSuggestionClick(q)}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 * i, duration: 0.3 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   {q}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -115,20 +125,28 @@ export default function ChatPanel({
               <ChatMessage key={index} message={msg} />
             ))}
 
-            {loading && (
-              <div className="message message-assistant fade-in">
-                <div className="message-avatar">
-                  <Brain size={18} />
-                </div>
-                <div className="message-content">
-                  <div className="typing-indicator">
-                    <div className="typing-dot" />
-                    <div className="typing-dot" />
-                    <div className="typing-dot" />
+            <AnimatePresence>
+              {loading && (
+                <motion.div 
+                  className="message message-assistant"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="message-avatar">
+                    <Brain size={18} />
                   </div>
-                </div>
-              </div>
-            )}
+                  <div className="message-content">
+                    <div className="typing-indicator">
+                      <div className="typing-dot" />
+                      <div className="typing-dot" style={{ animationDelay: '0.2s' }} />
+                      <div className="typing-dot" style={{ animationDelay: '0.4s' }} />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div ref={messagesEndRef} />
           </div>

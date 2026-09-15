@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { User, Brain } from 'lucide-react';
+import { motion } from 'framer-motion';
 import CodeCitation from './CodeCitation';
 
 /**
@@ -11,7 +12,12 @@ export default function ChatMessage({ message }) {
   const isUser = message.role === 'USER';
 
   return (
-    <div className={`message ${isUser ? 'message-user' : 'message-assistant'} fade-in`}>
+    <motion.div 
+      className={`message ${isUser ? 'message-user' : 'message-assistant'}`}
+      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    >
       <div className="message-avatar">
         {isUser ? <User size={18} /> : <Brain size={18} />}
       </div>
