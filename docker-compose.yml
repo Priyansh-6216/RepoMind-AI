@@ -65,6 +65,15 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,6 +98,15 @@ services:
       dockerfile: Dockerfile
     container_name: repomind-worker
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy
