@@ -1,0 +1,25 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.repomind: INFO
+    org.springframework: WARN
+    org.hibernate: ERROR
+    org.testcontainers: WARN
