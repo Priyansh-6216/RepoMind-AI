@@ -103,7 +103,9 @@ Import any public GitHub repository and **ask questions about its codebase** —
 
 ---
 
-## 🚀 Quick Start
+---
+
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
 
@@ -113,8 +115,8 @@ Import any public GitHub repository and **ask questions about its codebase** —
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/your-username/RepoMind.git
-cd RepoMind
+git clone https://github.com/Priyansh-6216/RepoMind-AI.git
+cd RepoMind-AI
 ```
 
 ### 2. Pull Ollama Models
@@ -133,6 +135,23 @@ docker-compose up --build
 ### 4. Open the App
 
 Navigate to **http://localhost:3000**
+
+---
+
+## 🌍 Production Deployment
+
+We've provided a fully automated deployment script for production environments. This leverages multi-stage builds, non-root users, memory limits, and the `prod` Spring profile.
+
+1. SSH into your production server.
+2. Clone the repository and configure your `.env` file (see `.env.example`).
+3. Run the automated deployment script:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+This script will pull the latest code, inject environment variables, rebuild the optimized Docker images, and clean up any dangling resources!
 
 ---
 
