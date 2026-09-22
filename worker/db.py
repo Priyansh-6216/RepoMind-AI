@@ -30,6 +30,7 @@ def get_connection():
 #  Job Status Updates
 # ──────────────────────────────────────────────────────────────
 
+
 def update_job_status(
     job_id: str,
     status: str,
@@ -70,7 +71,9 @@ def update_job_status(
             cur.execute(query, params)
 
         conn.commit()
-        logger.info("job_status_updated", job_id=job_id, status=status, progress=progress)
+        logger.info(
+            "job_status_updated", job_id=job_id, status=status, progress=progress
+        )
 
     except Exception as e:
         conn.rollback()
@@ -80,7 +83,9 @@ def update_job_status(
         conn.close()
 
 
-def update_repo_status(repo_id: str, status: str, file_count: int = 0, chunk_count: int = 0):
+def update_repo_status(
+    repo_id: str, status: str, file_count: int = 0, chunk_count: int = 0
+):
     """Update a repository's status and counts."""
     conn = get_connection()
     try:
@@ -103,6 +108,7 @@ def update_repo_status(repo_id: str, status: str, file_count: int = 0, chunk_cou
 # ──────────────────────────────────────────────────────────────
 #  File & Chunk Storage
 # ──────────────────────────────────────────────────────────────
+
 
 def store_code_file(
     repo_id: str,
@@ -158,20 +164,23 @@ def store_code_chunks(
             values = []
             for chunk, embedding in zip(chunks, embeddings):
                 import numpy as np
+
                 embedding_array = np.array(embedding, dtype=np.float32)
 
-                values.append((
-                    str(uuid.uuid4()),
-                    file_id,
-                    repo_id,
-                    chunk.chunk_type,
-                    chunk.name[:500] if chunk.name else None,
-                    chunk.content,
-                    chunk.start_line,
-                    chunk.end_line,
-                    embedding_array,
-                    Json(chunk.metadata),
-                ))
+                values.append(
+                    (
+                        str(uuid.uuid4()),
+                        file_id,
+                        repo_id,
+                        chunk.chunk_type,
+                        chunk.name[:500] if chunk.name else None,
+                        chunk.content,
+                        chunk.start_line,
+                        chunk.end_line,
+                        embedding_array,
+                        Json(chunk.metadata),
+                    )
+                )
 
             execute_values(
                 cur,
@@ -197,6 +206,7 @@ def store_code_chunks(
 # ──────────────────────────────────────────────────────────────
 #  Query Helpers
 # ──────────────────────────────────────────────────────────────
+
 
 def get_job_details(job_id: str) -> Optional[dict]:
     """Fetch job details including repository info."""

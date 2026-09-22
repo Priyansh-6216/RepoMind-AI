@@ -58,6 +58,7 @@ signal.signal(signal.SIGINT, signal_handler)
 #  Core Pipeline
 # ══════════════════════════════════════════════════════════════
 
+
 def process_job(job_id: str, redis_client=None):
     """
     Execute the full indexing pipeline for a repository.
@@ -148,7 +149,8 @@ def process_job(job_id: str, redis_client=None):
             # Update progress
             progress = 40 + int((file_idx + 1) / max(total_files, 1) * 50)
             update_job_status(
-                job_id, "EMBEDDING",
+                job_id,
+                "EMBEDDING",
                 progress=min(progress, 90),
                 processed_files=file_idx + 1,
             )
@@ -170,8 +172,12 @@ def process_job(job_id: str, redis_client=None):
             total_chunks += len(batch_texts)
 
         # ── Stage 4: Complete ─────────────────────────────────
-        update_job_status(job_id, "COMPLETED", progress=100, processed_files=total_files)
-        update_repo_status(repo_id, "READY", file_count=total_files, chunk_count=total_chunks)
+        update_job_status(
+            job_id, "COMPLETED", progress=100, processed_files=total_files
+        )
+        update_repo_status(
+            repo_id, "READY", file_count=total_files, chunk_count=total_chunks
+        )
 
         logger.info(
             "job_completed",
@@ -182,17 +188,27 @@ def process_job(job_id: str, redis_client=None):
 
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)}"
-        logger.error("job_failed", job_id=job_id, error=error_msg, traceback=traceback.format_exc())
+        logger.error(
+            "job_failed",
+            job_id=job_id,
+            error=error_msg,
+            traceback=traceback.format_exc(),
+        )
         update_job_status(job_id, "FAILED", error_message=error_msg)
         update_repo_status(repo_id, "FAILED")
         if redis_client:
             try:
-                redis_client.lpush("repomind:jobs:dlq", json.dumps({
-                    "job_id": job_id,
-                    "repository_id": repo_id,
-                    "error": error_msg,
-                    "failed_at": time.time()
-                }))
+                redis_client.lpush(
+                    "repomind:jobs:dlq",
+                    json.dumps(
+                        {
+                            "job_id": job_id,
+                            "repository_id": repo_id,
+                            "error": error_msg,
+                            "failed_at": time.time(),
+                        }
+                    ),
+                )
                 logger.info("pushed_to_dlq", job_id=job_id)
             except Exception as dlq_err:
                 logger.error("dlq_push_failed", error=str(dlq_err))
@@ -205,6 +221,7 @@ def process_job(job_id: str, redis_client=None):
 # ══════════════════════════════════════════════════════════════
 #  Redis Consumer Loop
 # ══════════════════════════════════════════════════════════════
+
 
 def main():
     """Main worker loop — consumes jobs from Redis queue."""

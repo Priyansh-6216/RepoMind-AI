@@ -50,10 +50,11 @@ EXTENSION_LANGUAGE_MAP = {
 @dataclass
 class ParsedFile:
     """Represents a single parsed source file."""
-    file_path: str      # Relative path from repo root
-    language: str       # Detected language
-    content: str        # Raw file content
-    size_bytes: int     # File size
+
+    file_path: str  # Relative path from repo root
+    language: str  # Detected language
+    content: str  # Raw file content
+    size_bytes: int  # File size
 
 
 def parse_repository(repo_path: str) -> Generator[ParsedFile, None, None]:
@@ -78,8 +79,7 @@ def parse_repository(repo_path: str) -> Generator[ParsedFile, None, None]:
     for root, dirs, files in os.walk(repo_path):
         # Filter out excluded directories (modifies in-place for os.walk)
         dirs[:] = [
-            d for d in dirs
-            if d not in config.app.skip_dirs and not d.startswith(".")
+            d for d in dirs if d not in config.app.skip_dirs and not d.startswith(".")
         ]
 
         for filename in files:

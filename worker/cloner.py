@@ -39,7 +39,7 @@ def clone_repository(repo_url: str, repo_id: str) -> str:
         Repo.clone_from(
             repo_url,
             clone_path,
-            depth=1,               # Shallow clone — only latest commit
+            depth=1,  # Shallow clone — only latest commit
             single_branch=True,
             no_tags=True,
         )
