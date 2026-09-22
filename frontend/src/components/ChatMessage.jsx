@@ -53,6 +53,6 @@ export default function ChatMessage({ message }) {
           <CodeCitation citations={message.citations} />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
